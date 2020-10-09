@@ -6,7 +6,9 @@ if(process.env.NODE_ENV !== 'production'){
     dotenv.config();
 }
 
-let dbClient = new Unbounded('aws-us-est-2', 'celestincollin@gmail.com', process.env.DB_PASS);
+let dbClient = new Unbounded('aws-us-east-2', 'celestincollin@gmail.com', process.env.DB_PASS);
+
+let db = dbClient.database("qsmood");
 
 const router = express.Router();
 
@@ -27,8 +29,8 @@ router.get("/day/:date", (req, res) => {
         return;
     }
 
-    //TODO retrieve document in DB
     res.sendStatus(200);
+    //TODO retrieve document in DB
 })
 
 router.get("/range/:startDate/:endDate", (req, res) => {
