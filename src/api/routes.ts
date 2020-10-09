@@ -1,6 +1,12 @@
 import express from 'express'
-import unbounded from '@unbounded/unbounded'
+import Unbounded from '@unbounded/unbounded'
+import dotenv from 'dotenv'
 
+if(process.env.NODE_ENV === 'development'){
+    dotenv.config();
+}
+
+let dbClient = new Unbounded('aws-us-est-2', 'celestincollin@gmail.com', process.env.DB_PASS);
 
 const router = express.Router();
 
