@@ -8,8 +8,7 @@
     "build": "vue-cli-service build && tsc",
     "lint": "vue-cli-service lint",
     "postinstall": "if test \"$NODE_ENV\" = \"production\" ; then npm run build ; fi ",
-    "start": "node index.js",
-    "debug": "NODE_ENV='development' node index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "@unbounded/unbounded": "^1.0.1",
