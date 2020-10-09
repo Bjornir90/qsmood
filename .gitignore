@@ -2,6 +2,9 @@
 node_modules
 /dist
 
+# compiled files
+*.js
+*.js.map
 
 # local env files
 .env.local
