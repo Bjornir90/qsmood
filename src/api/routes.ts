@@ -29,8 +29,9 @@ router.get("/day/:date", (req, res) => {
         return;
     }
 
-    res.sendStatus(200);
-    //TODO retrieve document in DB
+    let result = db.match({date: date});
+
+    result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
 })
 
 router.get("/range/:startDate/:endDate", (req, res) => {
@@ -46,8 +47,9 @@ router.get("/range/:startDate/:endDate", (req, res) => {
         return;
     }
     
-    //TODO retrieve documents in DB
-    res.sendStatus(200);
+    let result = db.query().where((startDate: string, endDate: string, o: { date: string; }) => o.date >= startDate && o.date <= endDate).bind(startDate, endDate).send();
+
+    result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
 })
 
 function matchDate(toTest: string): boolean{
