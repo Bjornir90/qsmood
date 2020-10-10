@@ -4,6 +4,13 @@ import dotenv from 'dotenv'
 
 dotenv.config();
 
+interface DatabaseElement {
+    date: string;
+    [key: string]: DatabaseElementContent;
+}
+
+type DatabaseElementContent = number | string | string[];
+
 let dbClient = new Unbounded('aws-us-east-2', 'celestincollin@gmail.com', process.env.DB_PASS);
 
 let db = dbClient.database("qsmood");
@@ -20,7 +27,7 @@ router.get("/test", (req, res) => {
     res.send("<h1>Test succesful</h1>");
 })
 
-router.get("/day/:date", (req, res) => {
+router.get("/days/:date", (req, res) => {
     let date = req.params.date;
     
     if(!matchDate(date)){
@@ -33,7 +40,60 @@ router.get("/day/:date", (req, res) => {
     result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
 })
 
-router.get("/range/:startDate/:endDate", (req, res) => {
+//TODO secure user input !
+router.patch("/days/:date", (req, res) => {
+    let date = req.params.date;
+    let body = req.body;
+
+    if(!matchDate(date)){
+        res.status(400).json({"error": "Date is not properly formatted, format is aaaa-mm-dd"});
+        return;
+    }
+
+    let result = db.match({date: date});
+
+    result.then((data) => {
+
+        console.log("Database is responsive on patch");
+
+        if(data.length > 0){//Record is in database : update
+
+            console.log("Update element in database");
+
+            db.update().match({date: date}).set((body:any, o: DatabaseElement) => {
+                let newObject: DatabaseElement = o;
+
+                for (const key in body) {
+                    const element: DatabaseElementContent = body[key];
+                    newObject[key] = element;
+                }
+
+                return newObject;
+            }).bind(body).send()
+            .then((d: DatabaseElement) => res.status(200).json(d), (err: any) => res.status(500).json(err));
+
+        } else {//Record is not in database : create
+
+            console.log("Create element in database");
+
+            let newObject: DatabaseElement = {date: date};
+
+            for (const key in body) {
+                const element: DatabaseElementContent = body[key];
+                newObject[key] = element;
+            }
+
+            db.add(newObject)
+            .then((d: DatabaseElement) => res.status(201).json(d), (err: any) => res.status(500).json(err));
+
+        }
+        
+    }, (err) => {
+        res.status(500).json(err);
+    })
+})
+
+router.get("/days/range/:startDate/:endDate", (req, res) => {
     let startDate = req.params.startDate, endDate = req.params.endDate;
 
     if(!matchDate(startDate) || !matchDate(endDate)){
@@ -51,7 +111,7 @@ router.get("/range/:startDate/:endDate", (req, res) => {
     result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
 })
 
-router.get("/last/:n", (req, res) => {
+router.get("/days/last/:n", (req, res) => {
     let numberOfItems: number = parseInt(req.params.n);
 
     let result = db.query().where((o: any) => true).send();

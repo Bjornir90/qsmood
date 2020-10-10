@@ -41,7 +41,7 @@ export default Vue.extend({
   },
 
   mounted: function () {
-    this.$http.get(`${process.env.VUE_APP_API_URL}/api/last/10`).then(data => this.items = data.data, err => this.lastItemsLoadFailed = true)
+    this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/10`).then(data => this.items = data.data, err => this.lastItemsLoadFailed = true)
   }
 })
 </script>
