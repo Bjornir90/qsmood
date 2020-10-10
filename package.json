@@ -8,8 +8,6 @@
     "build:production": "vue-cli-service build && tsc",
     "build:development": "tsc",
     "lint": "vue-cli-service lint",
-    "postinstall": "by-node-env",
-    "postinstall:production": "npm run build",
     "start": "node index.js"
   },
   "dependencies": {
