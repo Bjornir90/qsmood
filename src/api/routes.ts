@@ -54,11 +54,9 @@ router.patch("/days/:date", (req, res) => {
 
     result.then((data) => {
 
-        console.log("Database is responsive on patch");
-
         if(data.length > 0){//Record is in database : update
 
-            console.log("Update element in database");
+            console.log("Update element from patch in database");
 
             db.update().match({date: date}).set((body:any, o: DatabaseElement) => {
                 let newObject: DatabaseElement = o;
@@ -74,7 +72,7 @@ router.patch("/days/:date", (req, res) => {
 
         } else {//Record is not in database : create
 
-            console.log("Create element in database");
+            console.log("Create element from patch in database");
 
             let newObject: DatabaseElement = {date: date};
 
