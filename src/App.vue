@@ -12,6 +12,7 @@
 
       <v-spacer> </v-spacer>
 
+      <v-btn text to="/login">Login</v-btn>
       <v-btn text to="/dbdashboard"> Access Database </v-btn> 
       <v-btn text to="/"> Home </v-btn>
     </v-app-bar>

@@ -2,18 +2,18 @@
   <v-container>
 
     <v-row justify="center">
-      <v-col cols="3">
+      <v-col xs="12" sm="6" md="3">
         <v-card elevation="4">
 
           <v-card-title>Items in database</v-card-title>
 
-          <div v-if="lastItemsLoadFailed" text-color="error">
+          <v-alert type="error" border="left" v-if="lastItemsLoadFailed" elevation="2">
             Error ! Could not load database items
-          </div>
+          </v-alert>
 
           <v-list v-else class="px-1">
 
-            <v-list-group v-for="item in items" :key="item.date">
+            <v-list-group v-for="item in items" :key="item.date" prepend-icon="mdi-view-day">
 
               <template v-slot:activator>
                 <v-list-item-title>{{item.date}}</v-list-item-title>
@@ -34,7 +34,7 @@
 
       </v-col>
 
-      <v-col cols="3">
+      <v-col xs="12" sm="6" md="3">
         <v-card class="px-2" elevation="4">
 
           <v-card-title>Search by date</v-card-title>
@@ -84,6 +84,21 @@
 
       </v-col>
 
+      <v-col xs="12" sm="6" md="3">
+        <v-card class="px-2 pb-1" elevation="4">          
+
+          <v-card-title>Delete record <v-spacer></v-spacer><v-icon large>mdi-trash-can-outline</v-icon></v-card-title>
+
+          <v-text-field v-model="toDeleteID" label="ID of record"></v-text-field>
+
+          <v-btn @click="deleteRecord" class="mb-2"><v-icon left>mdi-trash-can</v-icon>Delete</v-btn>
+
+          <v-alert v-if="elementDeleteSuccess" type="success" elevation="2" border="left" class="my-2">Record deleted</v-alert>
+          <v-alert v-if="elementDeleteFail" type="error" elevation="2" border="left" class="my-2">Failed to delete record</v-alert>
+
+        </v-card>
+      </v-col>
+
     </v-row>
 
   </v-container>
@@ -101,8 +116,11 @@ export default Vue.extend({
       searchRangeFailed: false,
       searchRangeRequested: false,
       rangeFormValid: false,
+      elementDeleteSuccess: false,
+      elementDeleteFail: false,
       startDate: '',
       endDate: '',
+      toDeleteID: '',
       dateRules: [
         (d: any) => /^\d{4}-\d{2}-\d{2}$/.test(d) || 'Format must be aaaa-mm-dd'
       ]
@@ -116,6 +134,13 @@ export default Vue.extend({
         this.itemsRange = data.data;
         this.searchRangeFailed = false;
       }, err => this.searchRangeFailed = true)
+    },
+    deleteRecord: function () {
+      const toDelete = this.toDeleteID;
+      console.log("Requesting to delete "+toDelete);
+      this.elementDeleteSuccess = false;
+      this.elementDeleteFail = false;
+      this.$http.post(`${process.env.VUE_APP_API_URL}/api/days/delete/${toDelete}`).then(d => this.elementDeleteSuccess = true, err => this.elementDeleteFail = true)
     }
   },
 

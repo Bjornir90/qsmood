@@ -1,8 +1,12 @@
 import express from 'express'
 import Unbounded from '@unbounded/unbounded'
 import dotenv from 'dotenv'
+import jwt from 'jsonwebtoken'
 
 dotenv.config();
+
+//Environment variable type declaration, required by typescript
+declare var process: { env: {[key: string]: string;} };
 
 interface DatabaseElement {
     date: string;
@@ -11,20 +15,72 @@ interface DatabaseElement {
 
 type DatabaseElementContent = number | string | string[];
 
-let dbClient = new Unbounded('aws-us-east-2', 'celestincollin@gmail.com', process.env.DB_PASS);
+let dbClient = new Unbounded('aws-us-east-2', process.env.DB_MAIL, process.env.DB_PASS);
 
 let db = dbClient.database("qsmood");
 
 const router = express.Router();
 
+
+//Apply to every routes in /api
 router.use((req, res, next) => {
+
+    console.log("Received connection on "+req.path);
+
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    next();
+    res.setHeader('Access-Control-Allow-Headers', 'content-type, authorization');
+
+    if(req.path === "/token" || req.path === "/token/" || req.method === "OPTIONS"){//Accepts requests even without a token
+        next();
+        return;
+    }
+
+    let authHeader = req.headers.authorization;
+
+    if(authHeader){
+        try{
+            jwt.verify(authHeader.split(' ')[1], process.env.API_SECRET);
+            next();
+        } catch (err) {
+            console.log("Refused connection, token invalid");
+            res.status(403).json({'error': err});
+            return;
+        }
+    } else {
+        console.log("Refused connection, no token present in request");
+        res.status(403).json({'error': 'Missing authentication token'});
+    }
+
 })
 
 router.get("/test", (req, res) => {
     res.send("<h1>Test succesful</h1>");
+})
+
+router.post("/token", (req, res) => {
+    let pass = req.body.password;
+    let username = req.body.username;
+
+    if(username !== process.env.API_USERNAME || pass !== process.env.API_PASSWORD){
+        res.status(403).json({"error": "Wrong login information"});
+        return;
+    }
+
+    let token = jwt.sign({'access': 'granted'}, process.env.API_SECRET, {expiresIn: 60 * 60});// Expires in 1 hour
+
+    res.status(200).json({'token': token});
+})
+
+//TODO Authentification
+router.post("/days/delete/:id", (req, res) => {
+    let id = req.params.id;
+
+    let result = db.delete().match({id : id}).send();
+
+    console.log("Delete one item");
+
+    result.then((d: any) => res.status(200).json({"message": "success", "id": id}), (e: any) => res.status(500).json(e));
 })
 
 router.get("/days/:date", (req, res) => {
