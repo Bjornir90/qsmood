@@ -2,7 +2,7 @@
   <v-container>
 
     <v-row justify="center">
-      <v-col xs="12" sm="6" md="3">
+      <v-col cols="12" md="3">
         <v-card elevation="4">
 
           <v-card-title>Items in database</v-card-title>
@@ -34,7 +34,7 @@
 
       </v-col>
 
-      <v-col xs="12" sm="6" md="3">
+      <v-col cols="12" md="3">
         <v-card class="px-2" elevation="4">
 
           <v-card-title>Search by date</v-card-title>
@@ -84,7 +84,7 @@
 
       </v-col>
 
-      <v-col xs="12" sm="6" md="3">
+      <v-col cols="12" md="3">
         <v-card class="px-2 pb-1" elevation="4">          
 
           <v-card-title>Delete record <v-spacer></v-spacer><v-icon large>mdi-trash-can-outline</v-icon></v-card-title>
