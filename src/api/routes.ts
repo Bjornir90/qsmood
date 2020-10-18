@@ -82,17 +82,22 @@ router.post("/token", (req, res) => {
 
     res.status(200).json({'token': token});
 })
-/*
-router.post("/days/delete/:id", (req, res) => {
-    let id = req.params.id;
 
-    let result = db.delete().match({id : id}).send();
+router.post("/days/delete/:date", (req, res) => {
+    let date = req.params.date;
 
-    console.log("Delete one item");
-
-    result.then((d: any) => res.status(200).json({"message": "success", "id": id}), (e: any) => res.status(500).json(e));
+    db.query(
+        q.Get(q.Match(q.Index("days_ref_from_date"), date))
+    ).then((d: any) => {
+        db.query(q.Delete(d.ref)).then((deleteResponse: any) => {
+            res.status(200).json(deleteResponse);
+        }, (err: any) => {
+            res.status(500).json(err);
+        })
+    }, 
+    (e: any) => res.status(500).json(e));
 })
-*/
+
 
 router.get("/days/:date", (req, res) => {
     let date = req.params.date;
