@@ -137,7 +137,6 @@ export default Vue.extend({
     },
     deleteRecord: function () {
       const toDelete = this.toDeleteID;
-      console.log("Requesting to delete "+toDelete);
       this.elementDeleteSuccess = false;
       this.elementDeleteFail = false;
       this.$http.post(`${process.env.VUE_APP_API_URL}/api/days/delete/${toDelete}`).then(d => this.elementDeleteSuccess = true, err => this.elementDeleteFail = true)
@@ -145,7 +144,9 @@ export default Vue.extend({
   },
 
   mounted: function () {
-    this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/10`).then(data => this.items = data.data, err => this.lastItemsLoadFailed = true)
+    this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/10`).then(response => {
+      this.items = response.data;
+    }, err => this.lastItemsLoadFailed = true)
   }
 })
 </script>

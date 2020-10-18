@@ -63,12 +63,6 @@ router.get("/test", (req, res) => {
     res.send("<h1>Test succesful</h1>");
 })
 
-router.get("/happiness/last/:nbOfDays", (req, res) => {
-    let nbOfDaysToRetrieve: number = parseInt(req.params.nbOfDays);
-
-    
-})
-
 router.post("/token", (req, res) => {
     let pass = req.body.password;
     let username = req.body.username;
@@ -170,7 +164,7 @@ router.get("/days/range/:startDate/:endDate", (req, res) => {
     db.query(q.Map(
         q.Paginate(
             q.Filter(
-                q.Match(q.Index("sort_date_desc")), 
+                q.Match(q.Index("sort_date_asc")), 
                 q.Lambda(['date', 'ref'], 
                     q.And(q.GTE(endDate, q.Var('date'), startDate))
             ))),
