@@ -36,6 +36,11 @@ router.use((req, res, next) => {
         return;
     }
 
+    if(process.env.NODE_ENV === "dev"){
+        next();
+        return;
+    }
+
     let authHeader = req.headers.authorization;
 
     if(authHeader){
@@ -151,6 +156,44 @@ router.patch("/days/:date", (req, res) => {
     })
 })
 */
+
+router.patch("/days/:date", (req, res) => {
+    let date = req.params.date;
+    let body = req.body;
+    body["date"] = date;
+
+    if(!matchDate(date)){
+        res.status(400).json({"error": "Date is not properly formatted, format is aaaa-mm-dd"});
+        return;
+    }
+
+    let newDocument = {data: body};
+
+    db.query(q.Get(q.Match(q.Index("days_from_date_desc"), date))).then((response: any) => {//Document found
+
+        db.query(q.Update(response.ref, newDocument)).then((updateResponse: any) => {
+            res.status(200).json(response);
+        }, (updateError: any) => {
+            res.status(500).json(updateError);
+        });
+
+    }, (err: any) => {
+
+        if(err.requestResult.statusCode === 404){//Document does not exist
+            db.query(q.Create(q.Collection("days"), newDocument)).then((response: any) => {
+                res.status(201).json(response);
+            }, (error: any) => {
+                res.status(500).json(error);
+            })
+        } else {//Regular error
+            res.status(500).json(err);
+        }
+
+    });
+
+})
+
+
 router.get("/days/range/:startDate/:endDate", (req, res) => {
     let startDate = req.params.startDate, endDate = req.params.endDate;
 
