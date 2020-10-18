@@ -1,5 +1,6 @@
-import express from 'express'
+import express, { response } from 'express'
 import Unbounded from '@unbounded/unbounded'
+import fauna from 'faunadb'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
 
@@ -15,9 +16,8 @@ interface DatabaseElement {
 
 type DatabaseElementContent = number | string | string[];
 
-let dbClient = new Unbounded('aws-us-east-2', process.env.DB_MAIL, process.env.DB_PASS);
-
-let db = dbClient.database("qsmood");
+const db = new fauna.Client({secret: process.env.DB_SECRET});
+const q = fauna.query;
 
 const router = express.Router();
 
@@ -58,7 +58,11 @@ router.get("/test", (req, res) => {
     res.send("<h1>Test succesful</h1>");
 })
 
+router.get("/happiness/last/:nbOfDays", (req, res) => {
+    let nbOfDaysToRetrieve: number = parseInt(req.params.nbOfDays);
 
+    
+})
 
 router.post("/token", (req, res) => {
     let pass = req.body.password;
@@ -73,7 +77,7 @@ router.post("/token", (req, res) => {
 
     res.status(200).json({'token': token});
 })
-
+/*
 router.post("/days/delete/:id", (req, res) => {
     let id = req.params.id;
 
@@ -97,7 +101,6 @@ router.get("/days/:date", (req, res) => {
     result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
 })
 
-//TODO secure user input !
 router.patch("/days/:date", (req, res) => {
     let date = req.params.date;
     let body = req.body;
@@ -147,7 +150,7 @@ router.patch("/days/:date", (req, res) => {
         res.status(500).json(err);
     })
 })
-
+*/
 router.get("/days/range/:startDate/:endDate", (req, res) => {
     let startDate = req.params.startDate, endDate = req.params.endDate;
 
@@ -161,20 +164,38 @@ router.get("/days/range/:startDate/:endDate", (req, res) => {
         return;
     }
     
-    let result = db.query().where((startDate: string, endDate: string, o: { date: string; }) => o.date >= startDate && o.date <= endDate).bind(startDate, endDate).send();
-
-    result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
+    //Map to get data instead of just refs
+    //Filter to get only values in the range
+    db.query(q.Map(
+        q.Paginate(
+            q.Filter(
+                q.Match(q.Index("sort_date_desc")), 
+                q.Lambda(['date', 'ref'], 
+                    q.And(q.GTE(endDate, q.Var('date'), startDate))
+            ))),
+        q.Lambda(['date', 'ref'], q.Get(q.Var('ref')))
+    )).then((response: any) => {
+        let data = extractData(response);
+        res.status(200).json(data);
+    }, (error: any) => res.status(500).json(error));
 })
 
 router.get("/days/last/:n", (req, res) => {
     let numberOfItems: number = parseInt(req.params.n);
 
-    let result = db.query().where((o: any) => true).limit(numberOfItems).send();
-
-    console.log("Requested "+numberOfItems+" items");
-
-    result.then((data) => res.status(200).json(data), (err) => res.status(500).json({"error": "Error !"}));
+    db.query(q.Map(
+        q.Paginate(q.Match(q.Index("sort_date_desc")), {size: numberOfItems}), 
+        q.Lambda(['x', 'ref'], q.Get(q.Var('ref')))
+    ))
+    .then((response: any) => {
+        let data = extractData(response);
+        res.status(200).json(data);
+    }, (err: any) => res.status(500).json(err));
 })
+
+function extractData(toExtract: any): any{
+    return toExtract.data.map((x: any) => x.data);
+}
 
 function matchDate(toTest: string): boolean{
     let regex = /^\d{4}-\d{2}-\d{2}$/;
