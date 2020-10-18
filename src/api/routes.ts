@@ -58,6 +58,8 @@ router.get("/test", (req, res) => {
     res.send("<h1>Test succesful</h1>");
 })
 
+
+
 router.post("/token", (req, res) => {
     let pass = req.body.password;
     let username = req.body.username;
@@ -72,7 +74,6 @@ router.post("/token", (req, res) => {
     res.status(200).json({'token': token});
 })
 
-//TODO Authentification
 router.post("/days/delete/:id", (req, res) => {
     let id = req.params.id;
 
@@ -168,7 +169,7 @@ router.get("/days/range/:startDate/:endDate", (req, res) => {
 router.get("/days/last/:n", (req, res) => {
     let numberOfItems: number = parseInt(req.params.n);
 
-    let result = db.query().where((o: any) => true).send();
+    let result = db.query().where((o: any) => true).limit(numberOfItems).send();
 
     console.log("Requested "+numberOfItems+" items");
 
