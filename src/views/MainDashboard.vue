@@ -3,11 +3,11 @@
 
         <v-row justify="center">
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="4">
                 <v-card>
 
                     <v-card-title>Happiness overtime</v-card-title>
-                    <line-chart :chartData="happinessData"></line-chart>
+                    <line-chart :chartData="happinessData" :options="happinessOptions"></line-chart>
 
 
                 </v-card>
@@ -32,8 +32,20 @@ export default Vue.extend({
                 labels: [],
                 datasets: [{
                     label: "",
-                    data: null
+                    data: null,
+                    borderColor: '#BFDBF7',
+                    backgroundColor: '#EDF5FD'
                 }]
+            },
+            happinessOptions: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            min: 0,
+                            max: 5
+                        }
+                    }]
+                }
             },
             /*happinessData: {
                 labels: ["2020-10-09", "2020-10-10"],
@@ -56,7 +68,7 @@ export default Vue.extend({
             const formattedData = response.data.map((o: any) => o.moodscore);
 
             const labels = response.data.map((o: any) => o.date);
-            
+
             this.happinessData.datasets[0].label = "Happiness";
             this.happinessData.datasets[0].data = formattedData;
             this.happinessData.labels = labels;

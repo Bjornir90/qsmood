@@ -1,6 +1,6 @@
 <script lang="ts">
 /* eslint-disable @typescript-eslint/ban-ts-ignore*/
-import {Line} from 'vue-chartjs'
+import VueChart from 'vue-chartjs'
 import {
   Component,
   Prop,
@@ -10,50 +10,30 @@ import {
   Emit
 } from 'vue-property-decorator';
 import Chart from 'chart.js';
-
-/*interface LineChart extends Vue {
-    renderChart(data: Chart.ChartData, options?: Chart.ChartOptions): void;
-}
-*/
+import { mixins } from 'vue-class-component';
 
 //@ts-ignore
 @Component({
-    extends: Line
+    extends: VueChart.Line,
+    mixins: [VueChart.mixins.reactiveProp]
 })
 
 
-class LineChart extends Vue<Line> {
+class LineChart extends Vue<VueChart.Line> {
 
     @Prop({ required: true, default: {} })
     public chartData!: Chart.ChartData;
 
-    private options: Chart.ChartOptions = {};
+    @Prop({ required: false, default: {} })
+    public options!: Chart.ChartOptions;
 
     private Chart!: Chart;
 
     mounted () {
-        //this.applyDefaultOptions();
-        this.renderChart(this.chartData);
+        this.renderChart(this.chartData, this.options);
         this.Chart = this.$data._chart;
+        console.log("Visible sets:",this.Chart.getVisibleDatasetCount());
     }
-
-
-   /* private applyDefaultOptions() {
-            this.options.scales = {
-                xAxes: [
-                    {
-                    type: "time",
-                    time: {
-                        unit: "week",
-                        displayFormats : {
-                            week: 'YYYY-MM-DD'
-                        }
-                    }
-                    }
-                ],
-                yAxes: []
-            };
-    }*/
 }
 
 export default LineChart;
