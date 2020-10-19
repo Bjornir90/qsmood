@@ -30,7 +30,10 @@ export default Vue.extend({
         return {
             happinessData: {
                 labels: [],
-                datasets: []
+                datasets: [{
+                    label: "",
+                    data: null
+                }]
             },
             /*happinessData: {
                 labels: ["2020-10-09", "2020-10-10"],
@@ -53,11 +56,9 @@ export default Vue.extend({
             const formattedData = response.data.map((o: any) => o.moodscore);
 
             const labels = response.data.map((o: any) => o.date);
-
-            console.log(labels);
-            console.log(formattedData);
-
-            this.happinessData.datasets.push({label: "Happiness", data: formattedData});
+            
+            this.happinessData.datasets[0].label = "Happiness";
+            this.happinessData.datasets[0].data = formattedData;
             this.happinessData.labels = labels;
 
         }, (err: any) => this.happinessLoadFailed = true)

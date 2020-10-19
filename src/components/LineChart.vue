@@ -1,4 +1,5 @@
 <script lang="ts">
+/* eslint-disable @typescript-eslint/ban-ts-ignore*/
 import {Line} from 'vue-chartjs'
 import {
   Component,
@@ -10,12 +11,18 @@ import {
 } from 'vue-property-decorator';
 import Chart from 'chart.js';
 
+/*interface LineChart extends Vue {
+    renderChart(data: Chart.ChartData, options?: Chart.ChartOptions): void;
+}
+*/
+
+//@ts-ignore
 @Component({
     extends: Line
 })
 
 
-export default class LineChart extends Line {
+class LineChart extends Vue<Line> {
 
     @Prop({ required: true, default: {} })
     public chartData!: Chart.ChartData;
@@ -48,4 +55,6 @@ export default class LineChart extends Line {
             };
     }*/
 }
+
+export default LineChart;
 </script>
