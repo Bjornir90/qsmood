@@ -4,10 +4,11 @@
         <v-row justify="center">
 
             <v-col cols="12" md="4">
-                <v-card>
+                <v-card class="d-flex flex-column">
 
                     <v-card-title>Happiness overtime</v-card-title>
                     <line-chart v-if="happinessLoaded" :chart-data="happinessData" :options="happinessOptions"></line-chart>
+                    <v-progress-circular v-else indeterminate :size="100" class="align-self-center"></v-progress-circular>
 
 
                 </v-card>
