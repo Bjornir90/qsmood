@@ -7,7 +7,7 @@
                 <v-card>
 
                     <v-card-title>Happiness overtime</v-card-title>
-                    <line-chart :chartData="happinessData" :options="happinessOptions"></line-chart>
+                    <line-chart :chart-data="happinessData" :options="happinessOptions"></line-chart>
 
 
                 </v-card>
