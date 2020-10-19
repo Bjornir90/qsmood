@@ -72,7 +72,6 @@ router.post("/token", (req, res) => {
     res.status(200).json({'token': token});
 })
 
-//TODO Authentification
 router.post("/days/delete/:id", (req, res) => {
     let id = req.params.id;
 
@@ -96,7 +95,6 @@ router.get("/days/:date", (req, res) => {
     result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
 })
 
-//TODO secure user input !
 router.patch("/days/:date", (req, res) => {
     let date = req.params.date;
     let body = req.body;
