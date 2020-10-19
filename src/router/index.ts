@@ -8,7 +8,7 @@ const routes: Array<RouteConfig> = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../components/HelloWorld.vue')
+    component: () => import('../views/MainDashboard.vue')
   },
   {
     path: '/dbdashboard',

@@ -1,5 +1,5 @@
-import express from 'express'
-import Unbounded from '@unbounded/unbounded'
+import express, { json, response } from 'express'
+import fauna from 'faunadb'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
 
@@ -15,9 +15,8 @@ interface DatabaseElement {
 
 type DatabaseElementContent = number | string | string[];
 
-let dbClient = new Unbounded('aws-us-east-2', process.env.DB_MAIL, process.env.DB_PASS);
-
-let db = dbClient.database("qsmood");
+const db = new fauna.Client({secret: process.env.DB_SECRET});
+const q = fauna.query;
 
 const router = express.Router();
 
@@ -32,6 +31,11 @@ router.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Headers', 'content-type, authorization');
 
     if(req.path === "/token" || req.path === "/token/" || req.method === "OPTIONS"){//Accepts requests even without a token
+        next();
+        return;
+    }
+
+    if(process.env.NODE_ENV === "dev"){
         next();
         return;
     }
@@ -68,19 +72,25 @@ router.post("/token", (req, res) => {
     }
 
     let token = jwt.sign({'access': 'granted'}, process.env.API_SECRET, {expiresIn: 60 * 60});// Expires in 1 hour
-
+    
     res.status(200).json({'token': token});
 })
 
-router.post("/days/delete/:id", (req, res) => {
-    let id = req.params.id;
+router.post("/days/delete/:date", (req, res) => {
+    let date = req.params.date;
 
-    let result = db.delete().match({id : id}).send();
-
-    console.log("Delete one item");
-
-    result.then((d: any) => res.status(200).json({"message": "success", "id": id}), (e: any) => res.status(500).json(e));
+    db.query(
+        q.Get(q.Match(q.Index("days_ref_from_date"), date))
+    ).then((d: any) => {
+        db.query(q.Delete(d.ref)).then((deleteResponse: any) => {
+            res.status(200).json(deleteResponse);
+        }, (err: any) => {
+            res.status(500).json(err);
+        })
+    }, 
+    (e: any) => res.status(500).json(e));
 })
+
 
 router.get("/days/:date", (req, res) => {
     let date = req.params.date;
@@ -90,60 +100,49 @@ router.get("/days/:date", (req, res) => {
         return;
     }
 
-    let result = db.match({date: date});
-
-    result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
+    db.query(q.Get(q.Match(q.Index("days_from_date_desc"), date))).then((response: any) => {
+        res.status(200).json(response.data);
+    }, (err: any) => {
+        res.status(500).json(err);
+    })
 })
 
 router.patch("/days/:date", (req, res) => {
     let date = req.params.date;
     let body = req.body;
+    body["date"] = date;
 
     if(!matchDate(date)){
         res.status(400).json({"error": "Date is not properly formatted, format is aaaa-mm-dd"});
         return;
     }
 
-    let result = db.match({date: date});
+    let newDocument = {data: body};
 
-    result.then((data) => {
+    db.query(q.Get(q.Match(q.Index("days_from_date_desc"), date))).then((response: any) => {//Document found
 
-        if(data.length > 0){//Record is in database : update
+        db.query(q.Update(response.ref, newDocument)).then((updateResponse: any) => {
+            res.status(200).json(response);
+        }, (updateError: any) => {
+            res.status(500).json(updateError);
+        });
 
-            console.log("Update element from patch in database");
+    }, (err: any) => {
 
-            db.update().match({date: date}).set((body:any, o: DatabaseElement) => {
-                let newObject: DatabaseElement = o;
-
-                for (const key in body) {
-                    const element: DatabaseElementContent = body[key];
-                    newObject[key] = element;
-                }
-
-                return newObject;
-            }).bind(body).send()
-            .then((d: DatabaseElement) => res.status(200).json(d), (err: any) => res.status(500).json(err));
-
-        } else {//Record is not in database : create
-
-            console.log("Create element from patch in database");
-
-            let newObject: DatabaseElement = {date: date};
-
-            for (const key in body) {
-                const element: DatabaseElementContent = body[key];
-                newObject[key] = element;
-            }
-
-            db.add(newObject)
-            .then((d: DatabaseElement) => res.status(201).json(d), (err: any) => res.status(500).json(err));
-
+        if(err.requestResult.statusCode === 404){//Document does not exist
+            db.query(q.Create(q.Collection("days"), newDocument)).then((response: any) => {
+                res.status(201).json(response);
+            }, (error: any) => {
+                res.status(500).json(error);
+            })
+        } else {//Regular error
+            res.status(500).json(err);
         }
-        
-    }, (err) => {
-        res.status(500).json(err);
-    })
+
+    });
+
 })
+
 
 router.get("/days/range/:startDate/:endDate", (req, res) => {
     let startDate = req.params.startDate, endDate = req.params.endDate;
@@ -158,20 +157,38 @@ router.get("/days/range/:startDate/:endDate", (req, res) => {
         return;
     }
     
-    let result = db.query().where((startDate: string, endDate: string, o: { date: string; }) => o.date >= startDate && o.date <= endDate).bind(startDate, endDate).send();
-
-    result.then((data) => res.status(200).json(data), (err) => res.status(500).json(err));
+    //Map to get data instead of just refs
+    //Filter to get only values in the range
+    db.query(q.Map(
+        q.Paginate(
+            q.Filter(
+                q.Match(q.Index("sort_date_asc")), 
+                q.Lambda(['date', 'ref'], 
+                    q.And(q.GTE(endDate, q.Var('date'), startDate))
+            ))),
+        q.Lambda(['date', 'ref'], q.Get(q.Var('ref')))
+    )).then((response: any) => {
+        let data = extractData(response);
+        res.status(200).json(data);
+    }, (error: any) => res.status(500).json(error));
 })
 
 router.get("/days/last/:n", (req, res) => {
     let numberOfItems: number = parseInt(req.params.n);
 
-    let result = db.query().where((o: any) => true).send();
-
-    console.log("Requested "+numberOfItems+" items");
-
-    result.then((data) => res.status(200).json(data), (err) => res.status(500).json({"error": "Error !"}));
+    db.query(q.Map(
+        q.Paginate(q.Match(q.Index("sort_date_desc")), {size: numberOfItems}), 
+        q.Lambda(['x', 'ref'], q.Get(q.Var('ref')))
+    ))
+    .then((response: any) => {
+        let data = extractData(response);
+        res.status(200).json(data);
+    }, (err: any) => res.status(500).json(err));
 })
+
+function extractData(toExtract: any): any{
+    return toExtract.data.map((x: any) => x.data);
+}
 
 function matchDate(toTest: string): boolean{
     let regex = /^\d{4}-\d{2}-\d{2}$/;
