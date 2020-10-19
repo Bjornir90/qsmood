@@ -7,7 +7,7 @@
                 <v-card>
 
                     <v-card-title>Happiness overtime</v-card-title>
-                    <line-chart :chart-data="happinessData" :options="happinessOptions"></line-chart>
+                    <line-chart v-if="happinessLoaded" :chart-data="happinessData" :options="happinessOptions"></line-chart>
 
 
                 </v-card>
@@ -58,12 +58,14 @@ export default Vue.extend({
             },*/
             startDateHappiness: "2020-10-01",
             endDateHappiness: "2020-10-30",
-            happinessLoadFailed: false
+            happinessLoadFailed: false,
+            happinessLoaded: false
         }
     },
 
     mounted: function () {
         this.happinessLoadFailed = false;
+        this.happinessLoaded = false;
         this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/range/${this.startDateHappiness}/${this.endDateHappiness}`).then((response: any) => {
             const formattedData = response.data.map((o: any) => o.moodscore);
 
@@ -72,6 +74,7 @@ export default Vue.extend({
             this.happinessData.datasets[0].label = "Happiness";
             this.happinessData.datasets[0].data = formattedData;
             this.happinessData.labels = labels;
+            this.happinessLoaded = true;
 
         }, (err: any) => this.happinessLoadFailed = true)
     }
