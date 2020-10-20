@@ -1,22 +1,21 @@
 <script lang="ts">
 /* eslint-disable @typescript-eslint/ban-ts-ignore*/
-import VueChart from 'vue-chartjs'
+import {Line, mixins} from 'vue-chartjs'
 import {
     Component,
     Prop,
     Vue
 } from 'vue-property-decorator';
 import Chart from 'chart.js';
-import { mixins } from 'vue-class-component';
 
 //@ts-ignore
 @Component({
-    extends: VueChart.Line,
-    mixins: [VueChart.mixins.reactiveProp]
+    extends: Line,
+    mixins: [mixins.reactiveProp]
 })
 
 
-class LineChart extends Vue<VueChart.Line> {
+class LineChart extends Vue<Line> {
 
     @Prop({ required: false, default: {} })
     public options!: Chart.ChartOptions;
