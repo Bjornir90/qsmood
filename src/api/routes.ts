@@ -2,6 +2,7 @@ import express, { json, response } from 'express'
 import fauna from 'faunadb'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
+import https from "https"
 
 dotenv.config();
 
@@ -116,6 +117,14 @@ router.patch("/days/:date", (req, res) => {
         res.status(400).json({"error": "Date is not properly formatted, format is aaaa-mm-dd"});
         return;
     }
+
+    const snitchReq = https.request({
+        hostname: "nosnch.in",
+        port: 443,
+        path: "/c9cb8a5469",
+        method: "GET"
+    });
+    snitchReq.end();
 
     let newDocument = {data: body};
 
