@@ -3,7 +3,7 @@
 
         <v-row justify="center">
 
-            <v-col cols="12" md="4">
+            <v-col cols="12" md="6">
                 <v-card class="d-flex flex-column">
 
                     <v-card-title>Happiness overtime</v-card-title>
@@ -13,8 +13,8 @@
 
                 </v-card>
             </v-col>
-
-            <v-col cols="12" md="4">
+        
+            <v-col cols="12" md="6">
                 <v-card class="d-flex flex-column">
 
                     <v-card-title>Happiness per weekday</v-card-title>
@@ -25,6 +25,27 @@
                 </v-card>
             </v-col>
 
+        </v-row>
+
+        <v-row justify="center">
+            <v-col cols="12" md="4">
+                <v-card class="d-flex flex-column">
+                    <v-card-title>Upload pixel file</v-card-title>
+                    <v-file-input
+                        accept="application/json, .json"
+                        label="File input"
+                        v-model="file"
+                    ></v-file-input>
+
+                    <v-btn @click="uploadFile">Upload</v-btn>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="4">
+                <v-card class="d-flex flex-column">
+                    <v-card-title>Statistics</v-card-title>
+                    
+                </v-card>
+            </v-col>
         </v-row>
 
     </v-container>
@@ -59,6 +80,7 @@ export default Vue.extend({
     },
     data: () => {
         return {
+            file: null,
             happinessData: {
                 labels: [],
                 datasets: [{
@@ -157,6 +179,19 @@ export default Vue.extend({
             this.happinessWeekdayLoaded = true;
 
         }, (error: any) => this.happinessWeekdayLoadFailed = true);
+    },
+
+    methods: {
+        uploadFile: function() {
+            const file: File = this.file!;//To calm down compiler
+            file.text().then((s: string) => {
+                this.$http.post(`${process.env.VUE_APP_API_URL}/api/pixel`, s).then((response: any) => {
+                    alert("File uploaded");
+                }, (error: any) => {
+                    alert("Could not upload file "+error);
+                })
+            });
+        }
     }
 
 })
