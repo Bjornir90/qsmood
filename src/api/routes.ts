@@ -128,26 +128,10 @@ router.patch("/days/:date", (req, res) => {
 
     let newDocument = {data: body};
 
-    db.query(q.Get(q.Match(q.Index("days_from_date_desc"), date))).then((response: any) => {//Document found
-
-        db.query(q.Update(response.ref, newDocument)).then((updateResponse: any) => {
-            res.status(200).json(response);
-        }, (updateError: any) => {
-            res.status(500).json(updateError);
-        });
-
-    }, (err: any) => {
-
-        if(err.requestResult.statusCode === 404){//Document does not exist
-            db.query(q.Create(q.Collection("days"), newDocument)).then((response: any) => {
-                res.status(201).json(response);
-            }, (error: any) => {
-                res.status(500).json(error);
-            })
-        } else {//Regular error
-            res.status(500).json(err);
-        }
-
+    createOrUpdateDay(newDocument).then((success) => {
+        res.sendStatus(200);
+    }, (error) => {
+        res.sendStatus(500);
     });
 
 })
@@ -195,6 +179,38 @@ router.get("/days/last/:n", (req, res) => {
     }, (err: any) => res.status(500).json(err));
 })
 
+router.post("/pixel", (req, res) => {
+    const body = req.body;
+
+    if(!body){
+        res.status(400).json({"error": "No file uploaded"});
+    }
+
+    let succesful = true;
+
+    body.forEach((o: any) => {
+
+        let element: DatabaseElement = {
+            date: o.date,
+            moodscore: o.mood,
+            moodtags: o.emotions,
+            comment: o.notes
+        };
+
+        createOrUpdateDay({data: element}).then((success) => {
+            console.log("Created or updated pixel object in DB");
+        }, (error) => {
+            succesful = false;
+        })
+
+    });
+
+    if(succesful)
+            res.sendStatus(200);
+        else 
+            res.sendStatus(500);
+})
+
 function extractData(toExtract: any): any{
     return toExtract.data.map((x: any) => x.data);
 }
@@ -202,6 +218,23 @@ function extractData(toExtract: any): any{
 function matchDate(toTest: string): boolean{
     let regex = /^\d{4}-\d{2}-\d{2}$/;
     return regex.exec(toTest) !== null;
+}
+
+
+function createOrUpdateDay(day: any): Promise<object>{
+    return db.query(q.Get(q.Match(q.Index("days_from_date_desc"), day.data.date))).then((response: any) => {//Document found
+
+        return db.query(q.Update(response.ref, day));
+
+    }, (err: any) => {
+
+        if(err.requestResult.statusCode === 404){//Document does not exist
+            return  db.query(q.Create(q.Collection("days"), day));
+        } else {//Regular error
+            return new Promise<object>((resolve, reject) => {reject(err)});
+        }
+
+    });
 }
 
 export default router;
