@@ -36,7 +36,7 @@ router.use((req, res, next) => {
         return;
     }
 
-    if(process.env.NODE_ENV === "dev"){
+    if(process.env.NODE_ENV === "development"){
         next();
         return;
     }

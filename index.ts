@@ -11,5 +11,5 @@ if(process.env.NODE_ENV === 'production'){
 
 
 app.listen(app.get('port'), () => {
-    console.log("API server started on "+app.get('port'));
+    console.log("API server started on "+app.get('port')+" on env "+process.env.NODE_ENV);
 });
