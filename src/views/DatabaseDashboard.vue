@@ -139,7 +139,7 @@ export default Vue.extend({
       const toDelete = this.toDeleteID;
       this.elementDeleteSuccess = false;
       this.elementDeleteFail = false;
-      this.$http.post(`${process.env.VUE_APP_API_URL}/api/days/delete/${toDelete}`).then(d => this.elementDeleteSuccess = true, err => this.elementDeleteFail = true)
+      this.$http.delete(`${process.env.VUE_APP_API_URL}/api/days/${toDelete}`).then(d => this.elementDeleteSuccess = true, err => this.elementDeleteFail = true)
     }
   },
 

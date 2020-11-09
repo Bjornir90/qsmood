@@ -77,7 +77,7 @@ router.post("/token", (req, res) => {
     res.status(200).json({'token': token});
 })
 
-router.post("/days/delete/:date", (req, res) => {
+router.delete("/days/:date", (req, res) => {
     let date = req.params.date;
 
     db.query(
