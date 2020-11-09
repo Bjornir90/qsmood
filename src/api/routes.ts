@@ -30,6 +30,7 @@ router.use((req, res, next) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'content-type, authorization');
+    res.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
 
     if(req.path === "/token" || req.path === "/token/" || req.method === "OPTIONS"){//Accepts requests even without a token
         next();
@@ -118,13 +119,16 @@ router.patch("/days/:date", (req, res) => {
         return;
     }
 
-    const snitchReq = https.request({
-        hostname: "nosnch.in",
-        port: 443,
-        path: "/c9cb8a5469",
-        method: "GET"
-    });
-    snitchReq.end();
+
+    if(process.env.NODE_ENV !== "development") {
+        const snitchReq = https.request({
+            hostname: "nosnch.in",
+            port: 443,
+            path: "/c9cb8a5469",
+            method: "GET"
+        });
+        snitchReq.end();
+    }
 
     let newDocument = {data: body};
 
