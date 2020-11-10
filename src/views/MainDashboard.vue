@@ -67,10 +67,16 @@ weekday[6] = "Saturday";
 
 function computeMean(array: number[]){
     let sum = 0;
+    let skipped = 0;
 
-    array.forEach((n: number) => sum += n);
+    array.forEach((n: number) => {
+      if(n)
+        sum += n;
+      else
+        skipped++;
+    });
 
-    return sum/array.length;    
+    return sum/(array.length-skipped);
 }
 
 export default Vue.extend({
