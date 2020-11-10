@@ -119,15 +119,6 @@ export default Vue.extend({
                     }]
                 }
             },
-            /*happinessData: {
-                labels: ["2020-10-09", "2020-10-10"],
-                datasets: [
-                    {
-                        label: "Happiness",
-                        data: [3, 4]
-                    }
-                ]
-            },*/
             startDateHappiness: "2020-10-01",
             endDateHappiness: "2020-10-30",
             happinessLoadFailed: false,
@@ -142,10 +133,13 @@ export default Vue.extend({
         this.happinessLoaded = false;
         this.happinessWeekdayLoadFailed = false;
         this.happinessWeekdayLoaded = false;
-        this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/range/${this.startDateHappiness}/${this.endDateHappiness}`).then((response: any) => {
+        this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/30`).then((response: any) => {
             const formattedData = response.data.map((o: any) => o.moodscore);
 
             const labels = response.data.map((o: any) => o.date);
+
+            formattedData.reverse();
+            labels.reverse();
 
             this.happinessData.datasets[0].label = "Happiness";
             this.happinessData.datasets[0].data = formattedData;
