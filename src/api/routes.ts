@@ -14,6 +14,18 @@ interface DatabaseElement {
     [key: string]: DatabaseElementContent;
 }
 
+interface TagCategory {
+    type: string;
+    entries: string[];
+}
+
+interface PixelDatabaseElement {
+    date: string,
+    moodscore: string,
+    moodtags: string[],
+    comment: string
+}
+
 type DatabaseElementContent = number | string | string[];
 
 const db = new fauna.Client({secret: process.env.DB_SECRET});
@@ -194,15 +206,20 @@ router.post("/pixel", (req, res) => {
 
     body.forEach((o: any) => {
 
-        let element: DatabaseElement = {
-            date: o.date,
-            moodscore: o.mood,
-            moodtags: o.emotions,
-            comment: o.notes
+        let entry = o.entries[0];
+
+        let element: PixelDatabaseElement = {
+            date: entry.date,
+            moodscore: entry.mood,
+            moodtags: new Array<string>(),
+            comment: entry.notes
         };
 
+        entry.tags.forEach((tagCategory: TagCategory) => {
+            element.moodtags.concat(tagCategory.entries);
+        });
+
         createOrUpdateDay({data: element}).then((success) => {
-            console.log("Created or updated pixel object in DB");
         }, (error) => {
             succesful = false;
         })
