@@ -26,6 +26,10 @@ interface PixelDatabaseElement {
     comment: string
 }
 
+interface PixelDatabaseRequest {
+    data: PixelDatabaseElement
+}
+
 type DatabaseElementContent = number | string | string[];
 
 const db = new fauna.Client({secret: process.env.DB_SECRET});
@@ -242,7 +246,12 @@ function matchDate(toTest: string): boolean{
 }
 
 
-function createOrUpdateDay(day: any): Promise<object>{
+function createOrUpdateDay(day: PixelDatabaseRequest): Promise<object>{
+    if(day.data.date == null){
+        console.log("Missing date in new day, skipping...");
+        return new Promise<object>((resolve, reject) => {reject("Day is missing critical data")});
+    }
+
     return db.query(q.Get(q.Match(q.Index("days_from_date_desc"), day.data.date))).then((response: any) => {//Document found
 
         return db.query(q.Update(response.ref, day));
