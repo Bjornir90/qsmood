@@ -209,14 +209,14 @@ router.post("/pixel", (req, res) => {
         let entry = o.entries[0];
 
         let element: PixelDatabaseElement = {
-            date: entry.date,
-            moodscore: entry.mood,
+            date: o.date,
+            moodscore: entry.value,
             moodtags: new Array<string>(),
             comment: entry.notes
         };
 
         entry.tags.forEach((tagCategory: TagCategory) => {
-            element.moodtags.concat(tagCategory.entries);
+            element.moodtags.push.apply(element.moodtags, tagCategory.entries);
         });
 
         createOrUpdateDay({data: element}).then((success) => {
