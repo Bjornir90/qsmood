@@ -7,21 +7,33 @@
                 <v-card class="d-flex flex-column">
 
                     <v-card-title>Happiness overtime</v-card-title>
+
+                    <v-slider min="10" max="360" step="10" v-model="numberOfDaysHappiness" thumb-label>
+                        <template v-slot:append>
+                            <v-btn @click="fetchHappinessDays">Fetch</v-btn>
+                        </template>
+                    </v-slider>
+
                     <line-chart v-if="happinessLoaded" :chart-data="happinessData" :options="happinessOptions"></line-chart>
                     <v-progress-circular v-else indeterminate :size="100" class="align-self-center"></v-progress-circular>
-
-
                 </v-card>
             </v-col>
         
             <v-col cols="12" md="6">
                 <v-card class="d-flex flex-column">
+                    <v-responsive :aspect-ratio="16/9">
 
-                    <v-card-title>Happiness per weekday</v-card-title>
-                    <bar-chart v-if="happinessWeekdayLoaded" :chart-data="happinessWeekdayData" :options="happinessWeekdayOptions"></bar-chart>
-                    <v-progress-circular v-else indeterminate :size="100" class="align-self-center"></v-progress-circular>
+                        <v-card-title>Happiness per weekday</v-card-title>
+                        <v-slider min="10" max="360" step="10" v-model="numberOfDaysHappinessWeekday" thumb-label>
+                            <template v-slot:append>
+                                <v-btn @click="fetchWeekdayHappiness">Fetch</v-btn>
+                            </template>
+                        </v-slider>
 
+                        <bar-chart v-if="happinessWeekdayLoaded" :chart-data="happinessWeekdayData" :options="happinessWeekdayOptions"></bar-chart>
+                        <v-progress-circular v-else indeterminate :size="100" class="align-self-center"></v-progress-circular>
 
+                    </v-responsive>
                 </v-card>
             </v-col>
 
@@ -113,7 +125,8 @@ export default Vue.extend({
                             max: 5
                         }
                     }]
-                }
+                },
+                maintainAspectRatio: false
             },
             happinessWeekdayOptions: {
                 scales: {
@@ -123,62 +136,23 @@ export default Vue.extend({
                             max: 5
                         }
                     }]
-                }
+                },
+                maintainAspectRatio: false
             },
             startDateHappiness: "2020-10-01",
             endDateHappiness: "2020-10-30",
             happinessLoadFailed: false,
             happinessLoaded: false,
             happinessWeekdayLoadFailed: false,
-            happinessWeekdayLoaded: false
+            happinessWeekdayLoaded: false,
+            numberOfDaysHappiness: 30,
+            numberOfDaysHappinessWeekday: 120
         }
     },
 
     mounted: function () {
-        this.happinessLoadFailed = false;
-        this.happinessLoaded = false;
-        this.happinessWeekdayLoadFailed = false;
-        this.happinessWeekdayLoaded = false;
-        this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/30`).then((response: any) => {
-            const formattedData = response.data.map((o: any) => o.moodscore);
-
-            const labels = response.data.map((o: any) => o.date);
-
-            formattedData.reverse();
-            labels.reverse();
-
-            this.happinessData.datasets[0].label = "Happiness";
-            this.happinessData.datasets[0].data = formattedData;
-            this.happinessData.labels = labels;
-            this.happinessLoaded = true;
-
-        }, (err: any) => this.happinessLoadFailed = true);
-
-        this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/100`).then((response: any) => {
-
-            this.happinessWeekdayData.labels = weekday;
-            this.happinessWeekdayData.datasets[0].label = "Mean happiness";
-
-            const happinessPerDay: number[][] = [];
-
-            for (let index = 0; index < weekday.length; index++) {
-                happinessPerDay[index] = [];
-            }
-            
-            response.data.forEach((o: any) => {
-                happinessPerDay[new Date(o.date).getDay()].push(o.moodscore);
-            });
-
-            const meanHappinessPerDay: number[] = [];
-
-            for (let index = 0; index < weekday.length; index++) {
-                meanHappinessPerDay[index] = computeMean(happinessPerDay[index]);
-            }
-
-            this.happinessWeekdayData.datasets[0].data = meanHappinessPerDay;
-            this.happinessWeekdayLoaded = true;
-
-        }, (error: any) => this.happinessWeekdayLoadFailed = true);
+        this.fetchHappinessDays();
+        this.fetchWeekdayHappiness();
     },
 
     methods: {
@@ -191,6 +165,55 @@ export default Vue.extend({
                     alert("Could not upload file "+error);
                 })
             });
+        },
+        fetchHappinessDays: function () {
+            this.happinessLoadFailed = false;
+            this.happinessLoaded = false;
+
+            this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/`+this.numberOfDaysHappiness).then((response: any) => {
+                const formattedData = response.data.map((o: any) => o.moodscore);
+
+                const labels = response.data.map((o: any) => o.date);
+
+                formattedData.reverse();
+                labels.reverse();
+
+                this.happinessData.datasets[0].label = "Happiness";
+                this.happinessData.datasets[0].data = formattedData;
+                this.happinessData.labels = labels;
+                this.happinessLoaded = true;
+
+            }, (err: any) => this.happinessLoadFailed = true);
+        },
+        fetchWeekdayHappiness: function () {
+            this.happinessWeekdayLoadFailed = false;
+            this.happinessWeekdayLoaded = false;
+
+            this.$http.get(`${process.env.VUE_APP_API_URL}/api/days/last/`+this.numberOfDaysHappinessWeekday).then((response: any) => {
+
+                this.happinessWeekdayData.labels = weekday;
+                this.happinessWeekdayData.datasets[0].label = "Mean happiness";
+
+                const happinessPerDay: number[][] = [];
+
+                for (let index = 0; index < weekday.length; index++) {
+                    happinessPerDay[index] = [];
+                }
+
+                response.data.forEach((o: any) => {
+                    happinessPerDay[new Date(o.date).getDay()].push(o.moodscore);
+                });
+
+                const meanHappinessPerDay: number[] = [];
+
+                for (let index = 0; index < weekday.length; index++) {
+                    meanHappinessPerDay[index] = computeMean(happinessPerDay[index]);
+                }
+
+                this.happinessWeekdayData.datasets[0].data = meanHappinessPerDay;
+                this.happinessWeekdayLoaded = true;
+
+            }, (error: any) => this.happinessWeekdayLoadFailed = true);
         }
     }
 
